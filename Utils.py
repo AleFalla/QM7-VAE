@@ -4,7 +4,7 @@ from schnetpack import AtomsData, AtomsLoader
 from torch.utils.data import TensorDataset
 import pandas as pd
 import numpy as np
-
+from qml.representations import *
 
 def reset_weights(m):
   '''
@@ -31,9 +31,12 @@ def perc_error(a,b):
 
 def get_unpacked_properties(dizionario,data):
     props_list=data.available_properties
-    k=0
-    for key in data.available_properties:
+    
+    lista=data.available_properties.copy()
+    for key in lista:
+        k=0
         tmp=list(dizionario[key].size())
+        print(key)
         if len(tmp)==3 and tmp[1]!=1:
             props_list.remove(key)
             for i in range(0,tmp[1]):
@@ -41,8 +44,7 @@ def get_unpacked_properties(dizionario,data):
                 props_list.insert(k,key+'_{}'.format(i))
                 k=k+1
             del dizionario[key]
-        #here a way to handle Nx3 dimensional properties should be implemented, but not rotationally invariant properties should be avoided
-        k=k+1
+        
     return props_list
 
 def normalization(dizionario,props_list):
@@ -57,13 +59,14 @@ def data_pre_preparation(data,shuffle=False,normalize=False,save_to_file=True):
     loader=AtomsLoader(data,batch_size=int(data.__len__()),shuffle=shuffle)
     dizionario=next(iter(loader))
     props_list=get_unpacked_properties(dizionario,data)
-    print(dizionario)
+    
     if normalize==True:
         dizionario=normalization(dizionario, props_list)
-        print(dizionario)
+        
     t=()
     for key in props_list:
         t=t+(dizionario[key],)
+    
     df=pd.DataFrame(torch.cat(t,1).tolist(), columns = props_list)
     df['atom_numbers']=dizionario['_atomic_numbers'].tolist()
     df['positions']=dizionario['_positions'].tolist()
@@ -75,7 +78,7 @@ def data_pre_preparation(data,shuffle=False,normalize=False,save_to_file=True):
     df['#Cl']=df['atom_numbers'].apply(lambda x: np.count_nonzero(np.array(x)==17))
     max_asize={'C': df['#C'].max(), 'H': df['#H'].max(), 'N': df['#N'].max(), 'O': df['#O'].max(), 'S': df['#S'].max(),'Cl':df['#Cl'].max()}
     max_size=list(dizionario['_positions'].size())[1]
-    df['BoB'] = df['atom_numbers'].combine(df['positions'], lambda x,y: generate_bob(x, y,size=max_size,asize=max_asize))
+    df['BoB'] = df['atom_numbers'].combine(df['positions'], lambda x,y: generate_bob(x, y, x,size=max_size,asize=max_asize))
     #df=df.drop(columns=['atom_numbers','positions','#C','#H','#N','#O','#S','#Cl'])
     props_list.insert(0,'BoB')
     #df=df[props_list]
@@ -97,15 +100,15 @@ def data_preparation_latent_space(model,df,ID='',save_to_file=True):
 
     return df
 
-def split_train_validation(df,config_num=1,property_list=['Eat','HLGAP','POL','C6'],save_to_file=True):
+def split_train_test(df,config_num=1,save_to_file=True):
     len_group = config_num
     index_list = np.array(df.index)
     np.random.shuffle(np.reshape(index_list, (-1, len_group)))
     shuffled_df = df.loc[index_list, :]
     df=shuffled_df
     if save_to_file==True:
-        df[0:config_num*30000].to_json('./dataset{}_training.json'.format(len(df)))
-        df[config_num*30000:].to_json('./dataset{}_validation.json'.format(len(df)))
+        df[0:config_num*30000].to_json('./dataset{}_training.json'.format(len(df[0:config_num*30000])))
+        df[config_num*30000:].to_json('./dataset{}_test.json'.format(len(df[config_num*30000:])))
         
     return df[0:config_num*30000], df[config_num*30000:]
 

@@ -10,8 +10,8 @@ seed=0
 torch.manual_seed(seed)
 
 df=pd.read_json('./dataframe41537.json') #put the name of the json file with the right data
-df_tr=pd.read_json('./dataset41537_training.json') #put the name of the json file with the right data
-df_val=pd.read_json('./dataset41537_validation.json') #put the name of the json file with the right data
+df_tr=pd.read_json('./dataset30000_training.json') #put the name of the json file with the right data
+df_test=pd.read_json('./dataset11537_test.json') #put the name of the json file with the right data
 config_num=int(len(df)/41537)
 prop_list=df.columns[df.columns != 'BoB']
 prop_list=list(prop_list)
@@ -19,9 +19,9 @@ prop_list.remove('atom_numbers')
 prop_list.remove('positions') 
 prop_list=list(df.columns[df.columns != 'BoB'])[8:53] #comment this if you want all the properties
 dataset_1=pandas_to_dataset_mol_prop(df_tr,prop_list)
-dataset_2=pandas_to_dataset_mol_prop(df_val,prop_list) 
+dataset_2=pandas_to_dataset_mol_prop(df_test,prop_list) 
 
-latent_size=30 #len(prop_list) #here the latent size is set to the lenght of the property list but this is not necessary. It would be nice for invertibility of linear mappings
+latent_size=len(prop_list) #here the latent size is set to the lenght of the property list but this is not necessary. It would be nice for invertibility of linear mappings
 input_dim=len(df['BoB'][0])
 model_prop_ls=prop_ls_lin(latent_size=latent_size,prop_size=len(prop_list))
 model_reco=base_VAE(input_dim=input_dim, latent_size=latent_size)
@@ -72,7 +72,7 @@ model_reco.load_state_dict(torch.load(PATH))
 test_error_2=TEST_prop_mol(model_prop_ls,model_reco, dataset_2)
 print('second_check_test: {}%'.format(test_error_2))
 
-file = open("VAE_prop_to_ls_lin/error_log.txt", "w")
-file.write("error torch seed {}: ".format(seed) + '{}%'.format(test_error_2))
+file = open("VAE_prop_to_ls_lin/test_error_log.txt", "w")
+file.write("test error torch seed {}: ".format(seed) + '{}%'.format(test_error_2))
 file.close()
 

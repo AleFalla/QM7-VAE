@@ -10,8 +10,8 @@ seed=0
 torch.manual_seed(seed)
 
 df=pd.read_json('./dataframe41537.json') #put the name of the json file with the right data
-df_tr=pd.read_json('./dataset41537_training.json') #put the name of the json file with the right data
-df_val=pd.read_json('./dataset41537_validation.json') #put the name of the json file with the right data
+df_tr=pd.read_json('./dataset30000_training.json') #put the name of the json file with the right data
+df_test=pd.read_json('./dataset11537_test.json') #put the name of the json file with the right data
 config_num=int(len(df)/41537)
 prop_list=df.columns[df.columns != 'BoB']
 prop_list=list(prop_list)
@@ -19,7 +19,7 @@ prop_list.remove('atom_numbers')
 prop_list.remove('positions') 
 prop_list=list(df.columns[df.columns != 'BoB'])[8:53] #comment this if you want all the properties
 dataset_1=pandas_to_dataset_mol_prop(df_tr,prop_list)
-dataset_2=pandas_to_dataset_mol_prop(df_val,prop_list) 
+dataset_2=pandas_to_dataset_mol_prop(df_test,prop_list) 
 
 latent_size=len(prop_list) #here the latent size is set to the lenght of the property list but this is not necessary. It would be nice for invertibility of linear mappings
 input_dim=len(df['BoB'][0])
@@ -44,7 +44,7 @@ for i in range(0,len(text)):
 plt.xlabel('epochs/50')
 plt.ylabel('loss')
 plt.tight_layout()
-plt.savefig('./VAE_prop_to_ls_NN/plots/train_val_vs_epochs_reco_ls_prop_NN.pdf')
+plt.savefig('./VAE_ls_to_prop_NN/plots/train_val_vs_epochs_reco_ls_prop_NN.pdf')
 
 plt.figure('train_and_val')
 fig, ax = plt.subplots()
@@ -56,14 +56,14 @@ for i in range(0,len(text)):
 plt.xlabel('epochs/10')
 plt.ylabel('validation recostruction error in %')
 plt.tight_layout()
-plt.savefig('./VAE_prop_to_ls_NN/plots/val_reco_error_ls_prop_NN.pdf')
+plt.savefig('./VAE_ls_to_prop_NN/plots/val_reco_error_ls_prop_NN.pdf')
 
-PATH='./VAE_prop_to_ls_NN/reco_prop_ls_NN_trained_models/ls_prop_config_num_{}'.format(config_num)
+PATH='./VAE_ls_to_prop_NN/reco_ls_prop_NN_trained_models/ls_prop_config_num_{}'.format(config_num)
 torch.save(last_model_prop_ls.state_dict(), PATH)
 model_prop_ls = ls_prop_NN(latent_size=latent_size,prop_size=len(prop_list))
 model_prop_ls.load_state_dict(torch.load(PATH))
 
-PATH='./VAE_prop_to_ls_NN/reco_prop_ls_NN_trained_models/reco_config_num_{}'.format(config_num)
+PATH='./VAE_ls_to_prop_NN/reco_ls_prop_NN_trained_models/reco_config_num_{}'.format(config_num)
 torch.save(last_model_reco.state_dict(), PATH)
 model_reco = base_VAE(input_dim=input_dim, latent_size=latent_size)
 model_reco.load_state_dict(torch.load(PATH))
@@ -72,7 +72,7 @@ model_reco.load_state_dict(torch.load(PATH))
 test_error_2=TEST_reco(model_reco, dataset_2)
 print('second_check_test: {}%'.format(test_error_2))
 
-file = open("VAE_ls_to_prop_NN/error_log.txt", "w")
-file.write("error torch seed {}: ".format(seed) + '{}%'.format(test_error_2))
+file = open("VAE_ls_to_prop_NN/test_error_log.txt", "w")
+file.write("test error torch seed {}: ".format(seed) + '{}%'.format(test_error_2))
 file.close()
 

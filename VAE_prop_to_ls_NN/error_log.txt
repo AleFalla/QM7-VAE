@@ -1,1 +1,1 @@
-error torch seed 0: 6.838375091552734%
+error torch seed 0: 6.465462684631348%

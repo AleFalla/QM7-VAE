@@ -62,6 +62,7 @@ class prop_ls_NN(nn.Module):
         self.prop_size=prop_size
         
         self.model=nn.Sequential(
+            #nn.Dropout(p=0.8),
             nn.Linear(prop_size, 500),
             nn.Tanh(),
             nn.Linear(500,300),
@@ -105,5 +106,37 @@ class ls_prop_NN(nn.Module):
         logvar_p=mu_logvar[:,1,:]
         return mu_p,logvar_p
 
+mol_size=528
+
+class prop_mol_NN(nn.Module):
     
+    def __init__(self,mol_size=mol_size,prop_size=prop_size):
+        
+        super().__init__()
+
+        self.mol_size=mol_size
+        self.prop_size=prop_size
+        
+        self.model_mu=nn.Sequential(
+            
+            nn.Linear(prop_size, 100),
+            nn.Tanh(),
+            nn.Linear(100,300),
+            nn.Tanh(),
+            nn.Linear(300,500),
+            nn.Tanh(),
+            nn.Linear(500,2000),
+            nn.Tanh(),
+            nn.Linear(2000,mol_size*2),
+        )
+
+    def forward(self,x):
+
+        mu_logvar=self.model_mu(x).view(-1,2,self.mol_size)
+        mu_p=mu_logvar[:,0,:]
+        logvar_p=mu_logvar[:,1,:]
+        return mu_p,logvar_p
+
+    
+
 
