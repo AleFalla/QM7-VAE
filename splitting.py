@@ -9,6 +9,9 @@ seed=0
 torch.manual_seed(seed)
 
 df=pd.read_json('./dataset41537.json') #put the name of the json file with the right data
+print('done')
 config_num=int(len(df)/41537)
 
-df_tr,df_test=split_train_test(df,save_to_file=True)
+df_tr,df_test=split_train_test(df,config_num=config_num,save_to_file=True)
+print(df_test.columns)
+print(df_tr.columns)
